@@ -110,8 +110,18 @@ CFOptionFlags convertkSecAccessControl(NSString* key){
   }
 }
 
-RCT_EXPORT_METHOD(setItem:(NSString*)key value:(NSString*)value options:(NSDictionary *)options resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject){
+NSString *accessGroupValue(NSDictionary *options)
+{
+  if (options && options[@"accessGroup"] != nil) {
+    return options[@"accessGroup"];
+  }
+  return nil;
+}
 
+RCT_EXPORT_METHOD(setItem:(NSString*)key value:(NSString*)value options:(NSDictionary *)options resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject){
+    
+    NSString *accessGroup = accessGroupValue(options);
+    
     NSString * keychainService = [RCTConvert NSString:options[@"keychainService"]];
     if (keychainService == NULL) {
         keychainService = @"app";
@@ -124,6 +134,10 @@ RCT_EXPORT_METHOD(setItem:(NSString*)key value:(NSString*)value options:(NSDicti
                                       key, kSecAttrAccount, nil];
     NSMutableDictionary *query = [search mutableCopy];
     [query setValue: valueData forKey: kSecValueData];
+    
+    if (accessGroup != nil) {
+        query[(__bridge NSString *)kSecAttrAccessGroup] = accessGroup;
+    }
 
     if([RCTConvert BOOL:options[@"kSecAttrSynchronizable"]]){
         [query setValue:@YES forKey:(NSString *)kSecAttrSynchronizable];
